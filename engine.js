@@ -25,9 +25,9 @@ function make(wineMl, abvPct) {
   const acidityPct = abvPct; // labeled rough 1:1 conversion
   const motherMl = wineMl * MOTHER_PCT;
   let verdict;
-  if (acidityPct < 4) verdict = 'a light table vinegar (labeled)';
-  else if (acidityPct <= 7) verdict = 'the pickling and dressing zone (labeled)';
-  else verdict = 'a strong vinegar - dilute for most uses (labeled)';
+  if (acidityPct < 4) verdict = 'a light table vinegar - labeled estimate, unmeasured';
+  else if (acidityPct <= 7) verdict = 'around table strength - labeled estimate, unmeasured';
+  else verdict = 'a strong vinegar, usually diluted - labeled estimate, unmeasured';
   return { acidityPct: r1(acidityPct), motherMl: r1(motherMl), monthsLo: MONTHS_LO, monthsHi: MONTHS_HI, verdict };
 }
 
@@ -37,9 +37,9 @@ function check(vinegarMl, vinegarPct, waterMl) {
   if (!Number.isFinite(waterMl) || waterMl < 0) bad('water cannot be negative');
   const pct = (vinegarMl * vinegarPct) / (vinegarMl + waterMl);
   let band;
-  if (pct < 4) band = 'mild - dressings and sipping, not shelf-stable pickles (labeled)';
-  else if (pct <= 6) band = 'the working range - dressings and quick pickles (labeled)';
-  else band = 'strong - cleaning territory; dilute for the kitchen (labeled)';
+  if (pct < 4) band = 'mild table acidity - arithmetic only, not a preservation check';
+  else if (pct <= 6) band = 'standard table-strength range - arithmetic only, not a preservation check';
+  else band = 'strong, usually diluted for the kitchen - arithmetic only, not a preservation check';
   return { pct: r2(pct), band };
 }
 
