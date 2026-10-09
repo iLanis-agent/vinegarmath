@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinegar math - the app</title>
+<style>
+  :root { --ink:#262a1e; --bg:#f5f6ef; --card:#fff; --accent:#5a6b23; --accent2:#748a2f; --soft:#e6ebcf; }
+  * { box-sizing:border-box; margin:0; }
+  body { font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); padding:18px; }
+  .wrap { max-width:1180px; margin:0 auto; }
+  .lede { text-align:center; color:#585f45; margin:6px 0 16px; font-size:15px; max-width:760px; margin-left:auto; margin-right:auto; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:18px; }
+  .card { background:var(--card); border-radius:14px; padding:22px; box-shadow:0 1px 3px rgba(50,60,25,.08); }
+  h2 { font-size:19px; margin-bottom:14px; }
+  label { display:block; font-size:13px; color:#686f52; margin:10px 0 4px; }
+  input, select { width:100%; padding:9px 10px; border:1px solid #cfd6b8; border-radius:8px; font-size:15px; background:#fdfefa; }
+  button { width:100%; margin-top:16px; padding:12px; border:0; border-radius:9px; background:var(--accent); color:#fff; font-size:15px; font-weight:600; cursor:pointer; }
+  button:hover { background:var(--accent2); }
+  .big { font-size:34px; font-weight:700; margin:14px 0 2px; }
+  .cap { font-size:13px; color:#686f52; }
+  .pill { display:inline-block; margin-top:10px; padding:5px 12px; border-radius:20px; font-size:13px; font-weight:600; }
+  .pill.warm { background:var(--soft); color:var(--accent); }
+  table { width:100%; margin-top:12px; border-collapse:collapse; font-size:14px; }
+  td { padding:7px 0; border-bottom:1px solid #e3e7d2; }
+  td:last-child { text-align:right; font-weight:600; }
+  .err { color:#a3341f; font-size:14px; margin-top:10px; }
+  .note { font-size:13px; color:#83896a; margin-top:10px; font-style:italic; }
+  .foot { margin-top:20px; font-size:12.5px; color:#767c5e; line-height:1.6; }
+  .foot a { color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="lede">The bottle says 10%, the recipe says 5%, and nobody shows the working. Dilution, conversion and final acidity are multiplication. Run yours before the pickles go in.</p>
+  <div class="cards">
+    <div class="card">
+      <h2>Dilute it</h2>
+      <label for="d_hp">Starting acidity (%)</label>
+      <input id="d_hp" type="number" value="10" min="0" step="0.5">
+      <label for="d_hm">Starting volume (ml)</label>
+      <input id="d_hm" type="number" value="500" min="0" step="50">
+      <label for="d_wp">Target acidity (%)</label>
+      <input id="d_wp" type="number" value="5" min="0" step="0.5">
+      <button id="d_go">Cut the vinegar</button>
+      <div class="big" id="d_water">-</div>
+      <div class="cap">water to add</div>
+      <div class="pill warm" id="d_verdict" style="display:none"></div>
+      <table id="d_rows" style="display:none">
+        <tr><td>final volume</td><td id="d_final">-</td></tr>
+      </table>
+      <div class="err" id="d_err"></div>
+    </div>
+    <div class="card">
+      <h2>Make it</h2>
+      <label for="m_ml">Wine or cider (ml)</label>
+      <input id="m_ml" type="number" value="750" min="0" step="50">
+      <label for="m_abv">Alcohol (% ABV)</label>
+      <input id="m_abv" type="number" value="12" min="0" step="0.5">
+      <button id="m_go">Plan the crock</button>
+      <div class="big" id="m_acid">-</div>
+      <div class="cap">expected acidity (rough 1:1, labeled)</div>
+      <div class="pill warm" id="m_verdict" style="display:none"></div>
+      <table id="m_rows" style="display:none">
+        <tr><td>mother to inoculate</td><td id="m_mother">-</td></tr>
+        <tr><td>acetify window</td><td id="m_months">-</td></tr>
+      </table>
+      <div class="err" id="m_err"></div>
+    </div>
+    <div class="card">
+      <h2>Batch check</h2>
+      <label for="k_vm">Vinegar (ml)</label>
+      <input id="k_vm" type="number" value="500" min="0" step="50">
+      <label for="k_vp">Its acidity (%)</label>
+      <input id="k_vp" type="number" value="10" min="0" step="0.5">
+      <label for="k_wm">Water already added (ml)</label>
+      <input id="k_wm" type="number" value="500" min="0" step="50">
+      <button id="k_go">Check the mix</button>
+      <div class="big" id="k_pct">-</div>
+      <div class="cap">final acidity</div>
+      <div class="pill warm" id="k_band" style="display:none"></div>
+      <div class="err" id="k_err"></div>
+    </div>
+  </div>
+  <p class="foot">The rough 1:1 alcohol-to-acidity conversion, 20% mother inoculation and 1-3 month window are labeled guidance from published vinegar-making norms; your culture, oxygen and temperature move the real numbers. The dilution arithmetic on top of them is exact. <a href="index.html">Why this exists</a></p>
+</div>
+<script src="engine.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const g = id => parseFloat($(id).value);
+function show(id, txt) { const e = $(id); e.textContent = txt; e.style.display = txt ? 'inline-block' : 'none'; }
+document.getElementById('d_go').onclick = () => {
+  $('d_err').textContent = '';
+  try {
+    const r = Vinegarmath.dilute(g('d_hp'), g('d_hm'), g('d_wp'));
+    $('d_water').textContent = r.waterMl + ' ml';
+    show('d_verdict', r.verdict);
+    $('d_final').textContent = r.finalMl + ' ml';
+    $('d_rows').style.display = 'table';
+  } catch (e) { $('d_err').textContent = e.message; }
+};
+document.getElementById('m_go').onclick = () => {
+  $('m_err').textContent = '';
+  try {
+    const r = Vinegarmath.make(g('m_ml'), g('m_abv'));
+    $('m_acid').textContent = r.acidityPct + ' %';
+    show('m_verdict', r.verdict);
+    $('m_mother').textContent = r.motherMl + ' ml';
+    $('m_months').textContent = r.monthsLo + ' to ' + r.monthsHi + ' months';
+    $('m_rows').style.display = 'table';
+  } catch (e) { $('m_err').textContent = e.message; }
+};
+document.getElementById('k_go').onclick = () => {
+  $('k_err').textContent = '';
+  try {
+    const r = Vinegarmath.check(g('k_vm'), g('k_vp'), g('k_wm'));
+    $('k_pct').textContent = r.pct + ' %';
+    show('k_band', r.band);
+  } catch (e) { $('k_err').textContent = e.message; }
+};
+</script>
+</body>
+</html>
